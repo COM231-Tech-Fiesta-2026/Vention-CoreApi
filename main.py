@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import HTTPException
 from contextlib import asynccontextmanager
 from src.ventph_api.infrastructure.database.mongo import client
+from src.ventph_api.api.router import api_router
 
 
 # Health check
@@ -9,9 +10,9 @@ from src.ventph_api.infrastructure.database.mongo import client
 async def lifespan(app: FastAPI):
     try:
         await client.admin.command("ping")
-        print("✅ MongoDB connected successfully!")
+        print("MongoDB connected successfully!")
     except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
+        print(f"MongoDB connection failed: {e}")
 
     yield
 
@@ -19,6 +20,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(api_router)
 
 
 @app.get("/health")
