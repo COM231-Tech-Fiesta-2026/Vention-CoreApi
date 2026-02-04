@@ -10,7 +10,7 @@ from ...config import env
 from ...exceptions import DatabaseException, DuplicateException, NotFoundException
 
 client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
-    env.MONGO_LOCAL_URL, uuidRepresentation="standard"
+    env.MONGODB_LOCAL_URL, uuidRepresentation="standard"
 )
 db = client["iconnect"]
 
