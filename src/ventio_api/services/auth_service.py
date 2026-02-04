@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime
-from fastapi import HTTPException
 from src.ventio_api.api.schema.user import UserSignup, User
 from src.ventio_api.core.utils import calculate_age
 from src.ventio_api.infrastructure.auth.security import get_password_hash, create_tokens, verify_password
-from src.ventio_api.exceptions import NotFoundException
+from src.ventio_api.exceptions import NotFoundException, UsernameAlreadyExists, InvalidCredentials
+from src.ventio_api.infrastructure.database.users_db import users_db
 
 class AuthService:
     def __init__(self, user_db):
@@ -12,9 +12,10 @@ class AuthService:
 
     async def signup(self, user: UserSignup):
         try:
-            self.user_db.get(username=user.username)
-            raise HTTPException(status_code=409, detail="Username already taken")
+            self.user_db.get_by_username(user.username)
+            raise UsernameAlreadyExists(f"Username {user.username} is already taken")
         except NotFoundException:
+
             pass
 
         user_id = str(uuid.uuid4())
@@ -32,19 +33,18 @@ class AuthService:
             created_at=datetime.utcnow()
         )
 
-        self.user_db.insert(new_user)
+        await self.user_db.insert(new_user)
 
         return create_tokens(user_id=user_id, name=user.name)
     
     
     async def signin(self, username: str, password: str):
         try:
-            db_user = self.user_db.get(username=username)
-            
-            if not verify_password(password, db_user.pass_hash):
-                raise HTTPException(status_code=401, detail="Wrong Username or Password")
-            
-            return create_tokens(user_id=db_user.user_id, name=db_user.name)
-            
+            user = await self.user_db.get_by_username(username)
         except NotFoundException:
-            raise HTTPException(status_code=401, detail="Wrong Username or Password")
+            raise InvalidCredentials("Incorrect username or password")
+
+        if not verify_password(password, user.pass_hash):
+            raise InvalidCredentials("Incorrect username or password")
+
+        return create_tokens(user_id=user.user_id, name=user.name)

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from pymongo import MongoClient
 from .mongo import db
 from pymongo.errors import DuplicateKeyError
+import uuid
 
 from ...config import settings as env
 from ...exceptions import DatabaseException, DuplicateException, NotFoundException
@@ -289,30 +290,35 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def partial_update(
-        self,
-        set: Optional[dict[Any, Any]] = None,
-        push: Optional[dict[Any, Any]] = None,
-        **query: Any,
-    ) -> ModelType:
+    def partial_update(self, set: Optional[dict] = None, push: Optional[dict] = None, **query: Any) -> ModelType:
         try:
-            update_operations: dict[str, dict[Any, Any]] = {}
+            # Flexible ID Handling: Create a query that checks BOTH String and UUID
+            if "user_id" in query:
+                val = query["user_id"]
+                str_val = str(val)
+                try:
+                    uuid_val = uuid.UUID(str_val) if isinstance(val, str) else val
+                    # This tells MongoDB: "Find the doc where user_id is the string OR the binary UUID"
+                    query = {"user_id": {"$in": [str_val, uuid_val]}}
+                except ValueError:
+                    pass
+
+            # Normalize and build update
+            update_ops = {}
             if set is not None:
-                set = self.normalize(set)
-                update_operations["$set"] = set
+                update_ops["$set"] = self.normalize(set)
             if push is not None:
-                push = self.normalize(push)
-                update_operations["$push"] = push
+                update_ops["$push"] = self.normalize(push)
 
-            result = self.collection.update_one(query, update_operations)
+            # Execute the update
+            result = self.collection.update_one(query, update_ops)
+            
             if result.matched_count == 0:
-                raise NotFoundException(
-                    f"Failed to update {self.model}. Query: {query}"
-                )
+                raise NotFoundException(f"Failed to update {self.model}. Query used: {query}")
 
-            model = self.get(**query)
-            return model
-        except NotFoundException as e:
+            return self.get(**query)
+            
+        except NotFoundException:
             raise
         except Exception as e:
             raise DatabaseException from e

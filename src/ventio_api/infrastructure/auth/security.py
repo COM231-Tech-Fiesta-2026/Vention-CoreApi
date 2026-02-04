@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from src.ventio_api.config import settings
 from src.ventio_api.api.schema.user import TokenPayload
 from pydantic import ValidationError
+from src.ventio_api.exceptions import InvalidToken
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="signin")
@@ -44,34 +45,31 @@ def create_tokens(user_id: str, name: str):
     }
 
 
-async def get_current_user_claims(token: str = Depends(oauth2_scheme)):
+def _decode_token(token: str, expected_type: str) -> TokenPayload:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        token_data = TokenPayload(**payload)
         
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Invalid token type")
+        if token_data.type != expected_type:
+            raise InvalidToken(f"Token type must be '{expected_type}'")
             
-        user_id: str = payload.get("user_id")
-        name: str = payload.get("name")
+        return token_data
         
-        if user_id is None or name is None:
-            raise HTTPException(status_code=401, detail="Invalid token claims")
-            
-        return {"user_id": user_id, "name": name}
-        
-    except JWTError:
+    except (JWTError, ValidationError):
+        raise InvalidToken("Could not validate credentials")
+
+
+async def get_current_user_claims(token: str = Depends(oauth2_scheme)):
+    try:
+        token_data = _decode_token(token, expected_type="access")
+        return {"user_id": token_data.user_id, "name": token_data.name}
+    except InvalidToken:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+
 def verify_refresh_token(token: str) -> TokenPayload:
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        token_data = TokenPayload(**payload)
-        if token_data.type != "refresh":
-            raise HTTPException(status_code=401, detail="Invalid token type")
-        return token_data
-    except (ValidationError, JWTError):
-        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    return _decode_token(token, expected_type="refresh")

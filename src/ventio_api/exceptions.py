@@ -13,3 +13,15 @@ class DuplicateException(DatabaseException):
 class NotFoundException(DatabaseException):
     """Raised when a resource is not found"""
     pass
+
+class UsernameAlreadyExists(DuplicateException):
+    """Raised when the username is already taken during signup"""
+    pass
+
+class InvalidCredentials(BaseAPIException):
+    """Raised when login fails (wrong password or username)"""
+    pass
+
+class InvalidToken(BaseAPIException):
+    """Raised when the token is expired, invalid, or malformed"""
+    pass
