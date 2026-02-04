@@ -5,7 +5,7 @@ import os
 load_dotenv()
 
 class Settings(BaseSettings):
-    MONGO_LOCAL_URL: str
+    MONGODB_LOCAL_URL: str
     MONGODB_DB_NAME: str
 
     # SECRET_KEY: str
@@ -20,6 +20,6 @@ class Settings(BaseSettings):
 
 
 env = Settings(
-    MONGO_LOCAL_URL=os.getenv("MONGO_LOCAL_URL"),
+    MONGODB_LOCAL_URL=os.getenv("MONGODB_LOCAL_URL"),
     MONGODB_DB_NAME=os.getenv("MONGODB_DB_NAME"),
 )

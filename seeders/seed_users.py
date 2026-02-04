@@ -1,6 +1,6 @@
-from src.ventph_api.api.schema.user import User, UserGender
+from src.ventio_api.api.schema.user import User, UserGender
 from uuid import uuid4
-from src.ventph_api.infrastructure.database.users_db import user_db
+from src.ventio_api.infrastructure.database.users_db import user_db
 import asyncio
 
 SEED_USERS = [
