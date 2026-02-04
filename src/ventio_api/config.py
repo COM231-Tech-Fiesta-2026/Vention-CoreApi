@@ -6,7 +6,7 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    MONGO_LOCAL_URL: str
+    MONGODB_LOCAL_URL: str
     MONGODB_DB_NAME: str
 
     # SECRET_KEY: str
