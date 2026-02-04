@@ -1,16 +1,16 @@
 from enum import Enum
 from typing import Any, Generic, Optional, Type, TypeVar
 from pydantic import BaseModel
-from pymongo import MongoClient
+from .mongo import db
 from pymongo.errors import DuplicateKeyError
 
 from ...config import env
 from ...exceptions import DatabaseException, DuplicateException, NotFoundException
 
-client: MongoClient[Any] = MongoClient(
-    env.MONGO_LOCAL_URL, uuidRepresentation="standard"
-)
-db = client["iconnect"]
+# client: MongoClient[Any] = MongoClient(
+#     env.MONGO_LOCAL_URL, uuidRepresentation="standard"
+# )
+# db = client["iconnect"]
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
 
