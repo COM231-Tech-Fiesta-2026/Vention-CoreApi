@@ -4,3 +4,5 @@ from src.ventio_api.api.schema.user import User
 class UserDatabase(BaseDatabase[User]):
 	collection_name = "users"
 	model = User
+
+users_db = UserDatabase()

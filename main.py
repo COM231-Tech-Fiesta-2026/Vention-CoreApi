@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException
 from contextlib import asynccontextmanager
-from src.ventph_api.infrastructure.database.mongo import client
-from src.ventph_api.api.router import api_router
+from src.ventio_api.infrastructure.database.mongo import client
+from src.ventio_api.api.router import api_router
 
 
 # Health check

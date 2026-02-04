@@ -1,25 +1,21 @@
-from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     MONGODB_LOCAL_URL: str
     MONGODB_DB_NAME: str
 
-    # SECRET_KEY: str
-    # ALGORITHM: str
-    # ACCESS_TOKEN_EXPIRE_MINUTES: int
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_DAYS: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 120
 
     # LLM_API_KEY: str
     # LLM_ENDPOINT: str
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",        # Fixes the "Extra inputs are not permitted" crash
+        case_sensitive=False   # Fixes "mongo_local_url" vs "MONGODB_LOCAL_URL" mismatch
+    )
 
-
-env = Settings(
-    MONGODB_LOCAL_URL=os.getenv("MONGODB_LOCAL_URL"),
-    MONGODB_DB_NAME=os.getenv("MONGODB_DB_NAME"),
-)
+settings = Settings()

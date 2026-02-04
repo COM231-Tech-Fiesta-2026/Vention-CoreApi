@@ -3,16 +3,9 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 130
-
+from src.ventio_api.config import settings
+from src.ventio_api.api.schema.user import TokenPayload
+from pydantic import ValidationError
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="signin")
@@ -33,16 +26,16 @@ def create_tokens(user_id: str, name: str):
         "user_id": user_id,
         "name": name,
         "type": "access",
-        "exp": datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+        "exp": datetime.utcnow() + timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAYS)
     }
-    access_token = jwt.encode(access_claims, SECRET_KEY, algorithm=ALGORITHM)
+    access_token = jwt.encode(access_claims, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     refresh_claims = {
         "user_id": user_id,
         "type": "refresh",
-        "exp": datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        "exp": datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     }
-    refresh_token = jwt.encode(refresh_claims, SECRET_KEY, algorithm=ALGORITHM)
+    refresh_token = jwt.encode(refresh_claims, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     return {
         "access_token": access_token, 
@@ -53,7 +46,7 @@ def create_tokens(user_id: str, name: str):
 
 async def get_current_user_claims(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         
         if payload.get("type") != "access":
             raise HTTPException(status_code=401, detail="Invalid token type")
@@ -73,11 +66,12 @@ async def get_current_user_claims(token: str = Depends(oauth2_scheme)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-def verify_refresh_token(token: str):
+def verify_refresh_token(token: str) -> TokenPayload:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("type") != "refresh":
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        token_data = TokenPayload(**payload)
+        if token_data.type != "refresh":
             raise HTTPException(status_code=401, detail="Invalid token type")
-        return payload.get("user_id")
-    except JWTError:
+        return token_data
+    except (ValidationError, JWTError):
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
