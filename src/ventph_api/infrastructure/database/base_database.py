@@ -1,16 +1,18 @@
 from enum import Enum
 from typing import Any, Generic, Optional, Type, TypeVar
 from pydantic import BaseModel
-from .mongo import db
+
+# from .mongo import db
+from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import DuplicateKeyError
 
 from ...config import env
 from ...exceptions import DatabaseException, DuplicateException, NotFoundException
 
-# client: MongoClient[Any] = MongoClient(
-#     env.MONGO_LOCAL_URL, uuidRepresentation="standard"
-# )
-# db = client["iconnect"]
+client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
+    env.MONGO_LOCAL_URL, uuidRepresentation="standard"
+)
+db = client["iconnect"]
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
 
@@ -61,7 +63,7 @@ class BaseDatabase(Generic[ModelType]):
     collection_name: str
     model: Type[ModelType]
 
-    def __init__(self):
+    async def __init__(self):
         if not hasattr(self, "collection_name"):
             raise ValueError("collection_name must be set")
         if not hasattr(self, "model"):
@@ -69,7 +71,7 @@ class BaseDatabase(Generic[ModelType]):
 
         self.collection = db[self.collection_name]
 
-    def insert(self, item: ModelType) -> ModelType:
+    async def insert(self, item: ModelType) -> ModelType:
         """
         Insert a new document into the collection.
 
@@ -96,7 +98,7 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def get(self, **query: Any) -> ModelType:
+    async def get(self, **query: Any) -> ModelType:
         """
         Retrieve a single document from the collection matching the query.
 
@@ -134,7 +136,7 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def get_many(self, **query: Any) -> list[ModelType]:
+    async def get_many(self, **query: Any) -> list[ModelType]:
         """
         Retrieve multiple documents from the collection matching the query.
 
@@ -193,7 +195,7 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def search(
+    async def search(
         self, search_term: str, search_fields: list[str], **additional_filters: Any
     ) -> list[ModelType]:
         """
@@ -246,7 +248,7 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def update(self, item: ModelType, **query: Any) -> ModelType:
+    async def update(self, item: ModelType, **query: Any) -> ModelType:
         """
         Update a document in the collection matching the query.
 
@@ -288,7 +290,7 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def partial_update(
+    async def partial_update(
         self,
         set: Optional[dict[Any, Any]] = None,
         push: Optional[dict[Any, Any]] = None,
@@ -316,7 +318,7 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def delete(self, **query: Any) -> list[ModelType]:
+    async def delete(self, **query: Any) -> list[ModelType]:
         """
         Delete all documents from the collection matching the query.
 
@@ -361,7 +363,7 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def normalize(self, doc: dict[Any, Any]) -> dict[Any, Any]:
+    async def normalize(self, doc: dict[Any, Any]) -> dict[Any, Any]:
         """
         Normalize a dictionary by converting Enum and HttpUrl values to their primitive values.
 

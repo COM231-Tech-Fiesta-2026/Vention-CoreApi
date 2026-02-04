@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException
 from contextlib import asynccontextmanager
-from src.ventph_api.infrastructure.database.mongo import client
+
+# from src.ventph_api.infrastructure.database.mongo import client
+from src.ventph_api.infrastructure.database.base_database import client
 
 
 # Health check

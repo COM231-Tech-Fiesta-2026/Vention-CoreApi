@@ -4,6 +4,7 @@ import os
 
 load_dotenv()
 
+
 class Settings(BaseSettings):
     MONGO_LOCAL_URL: str
     MONGODB_DB_NAME: str
@@ -19,7 +20,4 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 
-env = Settings(
-    MONGO_LOCAL_URL=os.getenv("MONGO_LOCAL_URL"),
-    MONGODB_DB_NAME=os.getenv("MONGODB_DB_NAME"),
-)
+env = Settings()
