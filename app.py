@@ -3,6 +3,8 @@ from fastapi.exceptions import HTTPException
 from contextlib import asynccontextmanager
 from src.ventio_api.infrastructure.database.base_database import client
 
+from api_router import router
+
 
 # Health check
 @asynccontextmanager
@@ -19,6 +21,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(router)
 
 
 @app.get("/health")
