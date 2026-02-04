@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException
 from contextlib import asynccontextmanager
-from src.ventio_api.infrastructure.database.mongo import client
+from src.ventio_api.infrastructure.database.base_database import client
 
 
 # Health check
@@ -17,7 +17,9 @@ async def lifespan(app: FastAPI):
 
     client.close()
 
+
 app = FastAPI(lifespan=lifespan)
+
 
 @app.get("/health")
 async def health_check():

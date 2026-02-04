@@ -1,8 +1,5 @@
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
 
 class Settings(BaseSettings):
     MONGODB_LOCAL_URL: str
@@ -19,7 +16,4 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 
-env = Settings(
-    MONGODB_LOCAL_URL=os.getenv("MONGODB_LOCAL_URL"),
-    MONGODB_DB_NAME=os.getenv("MONGODB_DB_NAME"),
-)
+env = Settings()
