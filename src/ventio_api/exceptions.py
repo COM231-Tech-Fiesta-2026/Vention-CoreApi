@@ -25,3 +25,7 @@ class InvalidCredentials(BaseAPIException):
 class InvalidToken(BaseAPIException):
     """Raised when the token is expired, invalid, or malformed"""
     pass
+
+class AuthorizationException(Exception):
+    """Raised when authentication fails, tokens are invalid, or permissions are denied."""
+    pass

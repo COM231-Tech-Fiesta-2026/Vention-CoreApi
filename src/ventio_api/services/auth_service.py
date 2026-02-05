@@ -39,12 +39,25 @@ class AuthService:
     
     
     async def signin(self, username: str, password: str):
+        print(f"\n========== LOGIN DEBUG: {username} ==========")
+        
         try:
+            # 1. Get User from DB
             user = await self.user_db.get_by_username(username)
+            print(f"[DEBUG] Found User ID: {user.user_id}")
+            print(f"[DEBUG] Stored Hash:   {user.pass_hash}") 
         except NotFoundException:
+            print(f"[DEBUG] ERROR: User '{username}' does not exist in DB.")
             raise InvalidCredentials("Incorrect username or password")
-
-        if not verify_password(password, user.pass_hash):
+        
+        # 2. Check Password
+        is_valid = verify_password(password, user.pass_hash)
+        print(f"[DEBUG] Input Password: {password}")
+        print(f"[DEBUG] Verify Result:  {is_valid}")
+        print("=============================================\n")
+        
+        if not is_valid:
+            print("[DEBUG] REJECTED: Password did not match hash.")
             raise InvalidCredentials("Incorrect username or password")
-
+            
         return create_tokens(user_id=str(user.user_id), name=user.name)

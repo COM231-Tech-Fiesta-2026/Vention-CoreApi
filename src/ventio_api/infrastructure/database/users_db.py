@@ -1,13 +1,27 @@
 from typing import Any, Optional
+from datetime import datetime
 from src.ventio_api.core.utils import calculate_age, format_db_id, to_mongo_dict
 from src.ventio_api.infrastructure.database.base_database import BaseDatabase
-from src.ventio_api.api.schema.user import UserUpdate
+from src.ventio_api.api.schema.user import UserSignup, UserUpdate
 from src.ventio_api.models.user import User
 from src.ventio_api.exceptions import NotFoundException, DatabaseException
+from src.ventio_api.infrastructure.auth.security import get_password_hash
 
 class UserDatabase(BaseDatabase[User]):
     collection_name = "users"
     model = User
+
+    async def insert(self, user: User) -> User:
+        try:
+            user_dict = user.model_dump()
+            if user_dict.get("birthday"):
+                user_dict["birthday"] = datetime.combine(user_dict["birthday"], datetime.min.time())
+
+            result = self.collection.insert_one(user_dict)
+            
+            return user
+        except Exception as e:
+            raise DatabaseException(f"Failed to insert user: {str(e)}") from e
 
     async def get(self, **query: Any) -> User:
         """
