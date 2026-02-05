@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     MONGODB_LOCAL_URL: str
     MONGODB_DB_NAME: str
+    GEMINI_API_KEY: str
 
     # SECRET_KEY: str
     # ALGORITHM: str
