@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from src.ventio_api.config import settings
 from src.ventio_api.api.schema.user import TokenPayload
@@ -60,15 +60,8 @@ def _decode_token(token: str, expected_type: str) -> TokenPayload:
 
 
 async def get_current_user_claims(token: str = Depends(oauth2_scheme)):
-    try:
-        token_data = _decode_token(token, expected_type="access")
-        return {"user_id": token_data.user_id, "name": token_data.name}
-    except InvalidToken:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token_data = _decode_token(token, expected_type="access")
+    return {"user_id": token_data.user_id, "name": token_data.name}
 
 
 def verify_refresh_token(token: str) -> TokenPayload:

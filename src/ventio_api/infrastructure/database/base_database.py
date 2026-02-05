@@ -290,35 +290,30 @@ class BaseDatabase(Generic[ModelType]):
         except Exception as e:
             raise DatabaseException from e
 
-    def partial_update(self, set: Optional[dict] = None, push: Optional[dict] = None, **query: Any) -> ModelType:
+    async def partial_update(
+        self,
+        set: Optional[dict[Any, Any]] = None,
+        push: Optional[dict[Any, Any]] = None,
+        **query: Any,
+    ) -> ModelType:
         try:
-            # Flexible ID Handling: Create a query that checks BOTH String and UUID
-            if "user_id" in query:
-                val = query["user_id"]
-                str_val = str(val)
-                try:
-                    uuid_val = uuid.UUID(str_val) if isinstance(val, str) else val
-                    # This tells MongoDB: "Find the doc where user_id is the string OR the binary UUID"
-                    query = {"user_id": {"$in": [str_val, uuid_val]}}
-                except ValueError:
-                    pass
-
-            # Normalize and build update
-            update_ops = {}
+            update_operations: dict[str, dict[Any, Any]] = {}
             if set is not None:
-                update_ops["$set"] = self.normalize(set)
+                set = self.normalize(set)
+                update_operations["$set"] = set
             if push is not None:
-                update_ops["$push"] = self.normalize(push)
+                push = self.normalize(push)
+                update_operations["$push"] = push
 
-            # Execute the update
-            result = self.collection.update_one(query, update_ops)
-            
+            result = self.collection.update_one(query, update_operations)
             if result.matched_count == 0:
-                raise NotFoundException(f"Failed to update {self.model}. Query used: {query}")
+                raise NotFoundException(
+                    f"Failed to update {self.model}. Query: {query}"
+                )
 
-            return self.get(**query)
-            
-        except NotFoundException:
+            model = self.get(**query)
+            return model
+        except NotFoundException as e:
             raise
         except Exception as e:
             raise DatabaseException from e

@@ -17,10 +17,7 @@ async def signup(
     try:
         return await auth_service.signup(user)
     except UsernameAlreadyExists as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/signin")
 async def signin(

@@ -3,6 +3,7 @@ from fastapi.exceptions import HTTPException
 from contextlib import asynccontextmanager
 from src.ventio_api.infrastructure.database.mongo import client
 from src.ventio_api.api.router import api_router
+from src.ventio_api.api.middleware import AuthMiddleware
 
 
 # Health check
@@ -21,6 +22,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(AuthMiddleware)
 app.include_router(api_router)
 
 

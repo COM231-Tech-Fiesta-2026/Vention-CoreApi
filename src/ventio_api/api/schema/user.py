@@ -1,36 +1,13 @@
 from pydantic import BaseModel, validator
 from typing import Optional, Literal
-from datetime import datetime
-
-class UserBase(BaseModel):
-    name: str
-    username: str
-
-class User(BaseModel):
-    user_id: str
-    name: str
-    username: str
-    pass_hash: str
-    bday: str
-    age: str
-    gender: str
-    bio: Optional[str] = ""
-    created_at: datetime
+from datetime import date
 
 class UserSignup(BaseModel):
     name: str
     username: str
     password: str
-    bday: str 
+    birthday: date 
     gender: Literal['M', 'F'] 
-
-    @validator('bday')
-    def validate_bday(cls, v):
-        try:
-            datetime.strptime(v, '%Y-%m-%d')
-            return v
-        except ValueError:
-            raise ValueError("Birthday must be in YYYY-MM-DD format")
 
 class UserLogin(BaseModel):
     username: str
@@ -38,7 +15,7 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
-    bday: Optional[str] = None
+    birthday: Optional[date] = None
     gender: Optional[Literal['M', 'F']] = None
     bio: Optional[str] = ""
 
@@ -48,8 +25,8 @@ class Token(BaseModel):
 
 class UserProfile(BaseModel):
     name: str
-    bday: str
-    gender: str
+    birthday: date
+    gender: Literal['M', 'F']
     bio: Optional[str] = ""
 
 class TokenPayload(BaseModel):
