@@ -16,7 +16,7 @@ class CronService:
 		one_hour = datetime.now(timezone.utc) - timedelta(hours=1)
 
 		try:
-			conversations = await self.convo_db.get_many(last_message_at={"$lte": one_hour})
+			conversations = await self.convo_db.get_stale_converstation(time_threshold=one_hour)
 		except Exception as e:
 			print(f"[CRON] Failed to fetch stale conversations: {e}")
 			return
