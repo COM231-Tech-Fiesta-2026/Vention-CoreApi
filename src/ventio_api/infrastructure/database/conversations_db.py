@@ -1,6 +1,6 @@
 from base_database import BaseDatabase
-from ventio_api.api.schema.converstation import Converstation
+from src.ventio_api.api.schema.conversation import Conversation
 
-class ConverstationDatabase(BaseDatabase[Converstation]):
+class ConversationDatabase(BaseDatabase[Conversation]):
 	collection_name = "converstations"
-	model = Converstation
+	model = Conversation
