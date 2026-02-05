@@ -63,7 +63,7 @@ class BaseDatabase(Generic[ModelType]):
     collection_name: str
     model: Type[ModelType]
 
-    async def __init__(self):
+    def __init__(self):
         if not hasattr(self, "collection_name"):
             raise ValueError("collection_name must be set")
         if not hasattr(self, "model"):
@@ -90,13 +90,13 @@ class BaseDatabase(Generic[ModelType]):
         """
         try:
             data = item.model_dump()
-            data = self.normalize(data)
-            self.collection.insert_one(data)
+            data = await self.normalize(data)
+            await self.collection.insert_one(data)
             return item
         except DuplicateKeyError as e:
-            raise DuplicateException from e
+            raise DuplicateException(f"Duplicate entry found: {str(e)}") from e
         except Exception as e:
-            raise DatabaseException from e
+            raise DatabaseException(f"Database operation failed: {str(e)}") from e
 
     async def get(self, **query: Any) -> ModelType:
         """
@@ -124,15 +124,15 @@ class BaseDatabase(Generic[ModelType]):
 
         """
         try:
-            query = self.normalize(query)
-            doc = self.collection.find_one(query)
+            query = await self.normalize(query)
+            doc = await self.collection.find_one(query)
             if not doc:
                 raise NotFoundException(f"{self.model} not found. Query: {query}")
             doc["id"] = str(doc["_id"])
             doc.pop("_id", None)
             return self.model(**doc)
         except NotFoundException as e:
-            raise
+            raise NotFoundException from e
         except Exception as e:
             raise DatabaseException from e
 
@@ -175,14 +175,14 @@ class BaseDatabase(Generic[ModelType]):
         try:
             sort = query.pop("sort", None)
             filter = query.pop("filter", {})
-            query_normalized = self.normalize(query)
+            query_normalized = await self.normalize(query)
             if filter:
                 query_normalized = {"$and": [query_normalized, self.normalize(filter)]}
 
             if sort:
-                docs = self.collection.find(query_normalized).sort(sort)
+                docs = await self.collection.find(query_normalized).sort(sort)
             else:
-                docs = self.collection.find(query_normalized)
+                docs = await self.collection.find(query_normalized)
 
             models: list[ModelType] = []
             for doc in docs:
@@ -235,7 +235,7 @@ class BaseDatabase(Generic[ModelType]):
                 for key, value in normalized_filters.items():
                     query["$and"].append({key: value})
 
-            docs = self.collection.find(query)
+            docs = await self.collection.find(query)
 
             models: list[ModelType] = []
             for doc in docs:
@@ -277,9 +277,9 @@ class BaseDatabase(Generic[ModelType]):
         """
         try:
             data = item.model_dump()
-            data = self.normalize(data)
-            query = self.normalize(query)
-            result = self.collection.update_one(query, {"$set": data})
+            data = await self.normalize(data)
+            query = await self.normalize(query)
+            result = await self.collection.update_one(query, {"$set": data})
             if result.matched_count == 0:
                 raise NotFoundException(
                     f"Failed to update {self.model}. Query: {query}"
@@ -299,19 +299,19 @@ class BaseDatabase(Generic[ModelType]):
         try:
             update_operations: dict[str, dict[Any, Any]] = {}
             if set is not None:
-                set = self.normalize(set)
+                set = await self.normalize(set)
                 update_operations["$set"] = set
             if push is not None:
-                push = self.normalize(push)
+                push = await self.normalize(push)
                 update_operations["$push"] = push
 
-            result = self.collection.update_one(query, update_operations)
+            result = await self.collection.update_one(query, update_operations)
             if result.matched_count == 0:
                 raise NotFoundException(
                     f"Failed to update {self.model}. Query: {query}"
                 )
 
-            model = self.get(**query)
+            model = await self.get(**query)
             return model
         except NotFoundException as e:
             raise
@@ -349,9 +349,9 @@ class BaseDatabase(Generic[ModelType]):
             using broad queries to avoid unintended deletions.
         """
         try:
-            query = self.normalize(query)
-            deleted = self.get_many(**query)
-            result = self.collection.delete_many(query)
+            query = await self.normalize(query)
+            deleted = await self.get_many(**query)
+            result = await self.collection.delete_many(query)
             if result.deleted_count == 0:
                 raise NotFoundException(
                     f"Failed to delete {self.model}. Query: {query}"

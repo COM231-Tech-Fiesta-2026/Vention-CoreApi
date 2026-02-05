@@ -1,22 +1,18 @@
 from fastapi import APIRouter
-from ..schema.converstation import ConversationMode
+from ..schema.conversation import ConversationInput
 from uuid import UUID
-
-from ...services.conversation_service import (
-    create_conversation_service,
-    end_conversation_service,
-)
+from ...services.conversation_service import ConversationService
 
 router = APIRouter(prefix="/conversation")
 
+conversation = ConversationService()
+
 
 @router.post("/{mode}")
-async def create_conversation_route(
-    mode: ConversationMode, conversation_id: UUID | None = None
-):
-    return await create_conversation_service(mode, conversation_id)
+async def create_conversation_route(payload: ConversationInput):
+    return await conversation.handle_conversation_service(payload.model_dump())
 
 
 @router.post("/{conversation_id}/end")
 async def end_conversation_route(conversation_id: UUID):
-    return await end_conversation_service(conversation_id)
+    return await conversation.end_conversation_service(conversation_id)
