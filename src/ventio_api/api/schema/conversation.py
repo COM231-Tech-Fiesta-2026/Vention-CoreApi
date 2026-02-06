@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from enum import Enum
 from typing import Literal, Optional
 from uuid import UUID
 
@@ -16,3 +15,12 @@ class ConversationInput(BaseModel):
     mode: Literal["vent", "advice"] = Field(...)
     conversation_key: Optional[UUID] = None
     content: str = Field(...)
+
+
+class EndConversationInput(BaseModel):
+    conversation_key: UUID = Field(...)
+
+
+class ConversationOutput(BaseModel):
+    conversation_id: UUID = Field(...)
+    reply: str = Field(...)

@@ -176,16 +176,19 @@ class BaseDatabase(Generic[ModelType]):
             sort = query.pop("sort", None)
             filter = query.pop("filter", {})
             query_normalized = await self.normalize(query)
+
             if filter:
-                query_normalized = {"$and": [query_normalized, self.normalize(filter)]}
+                query_normalized = {
+                    "$and": [query_normalized, await self.normalize(filter)]
+                }
 
             if sort:
-                docs = await self.collection.find(query_normalized).sort(sort)
+                docs = self.collection.find(query_normalized).sort(sort)
             else:
-                docs = await self.collection.find(query_normalized)
+                docs = self.collection.find(query_normalized)
 
             models: list[ModelType] = []
-            for doc in docs:
+            async for doc in docs:
                 doc["id"] = str(doc["_id"])
                 doc.pop("_id", None)
                 model = self.model(**doc)
@@ -231,14 +234,14 @@ class BaseDatabase(Generic[ModelType]):
             query: dict[str, Any] = {"$and": [{"$or": or_conditions}]}
 
             if additional_filters:
-                normalized_filters = self.normalize(additional_filters)
+                normalized_filters = await self.normalize(additional_filters)
                 for key, value in normalized_filters.items():
                     query["$and"].append({key: value})
 
-            docs = await self.collection.find(query)
+            docs = self.collection.find(query)
 
             models: list[ModelType] = []
-            for doc in docs:
+            async for doc in docs:
                 doc["id"] = str(doc["_id"])
                 doc.pop("_id", None)
                 model = self.model(**doc)

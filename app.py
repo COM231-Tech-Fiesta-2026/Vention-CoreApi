@@ -11,9 +11,9 @@ from api_router import router
 async def lifespan(app: FastAPI):
     try:
         await client.admin.command("ping")
-        print("✅ MongoDB connected successfully!")
+        print("MongoDB connected successfully!")
     except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
+        print(f"MongoDB connection failed: {e}")
 
     yield
 

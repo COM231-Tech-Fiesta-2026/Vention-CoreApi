@@ -3,7 +3,10 @@ from typing import Any, Optional
 
 class CoreApiException(Exception):
     def __init__(
-        self, message: str, debug_info: Optional[Any] = None, status_code: int = 500
+        self,
+        message: str = "An internal error occured.",
+        debug_info: Optional[Any] = None,
+        status_code: int = 500,
     ):
         self.message = message
         self.debug_info = debug_info
@@ -12,7 +15,9 @@ class CoreApiException(Exception):
 
 
 class DatabaseException(CoreApiException):
-    def __init__(self, message: str, debug_info: Any = None):
+    def __init__(
+        self, message: str = "A database error occured.", debug_info: Any = None
+    ):
         super().__init__(message, debug_info, status_code=500)
 
 
@@ -22,5 +27,5 @@ class DuplicateException(CoreApiException):
 
 
 class NotFoundException(CoreApiException):
-    def __init__(self, message: str, debug_info: Any = None):
+    def __init__(self, message: str = "Resource not found.", debug_info: Any = None):
         super().__init__(message, debug_info, status_code=404)

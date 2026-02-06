@@ -6,7 +6,7 @@ import asyncio
 
 SEED_USERS = [
     User(
-        user_id=str(uuid4()),
+        user_id=uuid4(),
         name="Alice Smith",
         username="alice",
         pass_hash="hashed_password_1",
@@ -15,7 +15,7 @@ SEED_USERS = [
         gender=UserGender.FEMALE,
     ),
     User(
-        user_id=str(uuid4()),
+        user_id=uuid4(),
         name="Bob Johnson",
         username="bob",
         pass_hash="hashed_password_2",
@@ -37,8 +37,8 @@ async def seed_users():
 
 async def get_seed_users():
     user_db = UserDatabase()
-    user = await user_db.get(user_id=UUID("97cec983-4f62-41ca-b834-76cacdd7d08f"))
-    return user.model_dump()
+    user = await user_db.get(user_id=UUID("37d402a5-5d66-4af7-8fa3-7fcbb2609106"))
+    return user
 
 
 if __name__ == "__main__":
