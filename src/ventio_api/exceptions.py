@@ -29,3 +29,14 @@ class InvalidToken(BaseAPIException):
 class AuthorizationException(Exception):
     """Raised when authentication fails, tokens are invalid, or permissions are denied."""
     pass
+
+class CoreApiException(Exception): ...
+
+
+class DatabaseException(CoreApiException): ...
+
+
+class DuplicateException(CoreApiException): ...
+
+
+class NotFoundException(CoreApiException): ...

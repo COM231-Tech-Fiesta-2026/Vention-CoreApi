@@ -1,4 +1,5 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     MONGODB_LOCAL_URL: str
@@ -12,10 +13,8 @@ class Settings(BaseSettings):
     # LLM_API_KEY: str
     # LLM_ENDPOINT: str
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore",        # Fixes the "Extra inputs are not permitted" crash
-        case_sensitive=False   # Fixes "mongo_local_url" vs "MONGODB_LOCAL_URL" mismatch
-    )
+    class Config:
+        env_file = ".env"
 
-settings = Settings()
+
+env = Settings()
