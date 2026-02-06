@@ -4,7 +4,7 @@ from passlib.context import CryptContext
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
-from src.ventio_api.config import settings
+from src.ventio_api.config import env
 from src.ventio_api.api.schema.auth import TokenPayload
 from src.ventio_api.exceptions import InvalidToken
 
@@ -25,16 +25,16 @@ def create_tokens(user_id: str, name: str):
         "sub": user_id,  
         "name": name,
         "type": "access",
-        "exp": datetime.utcnow() + timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAYS)
+        "exp": datetime.utcnow() + timedelta(days=env.ACCESS_TOKEN_EXPIRE_DAYS)
     }
-    access_token = jwt.encode(access_claims, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    access_token = jwt.encode(access_claims, env.SECRET_KEY, algorithm=env.ALGORITHM)
 
     refresh_claims = {
         "sub": user_id,  
         "type": "refresh",
-        "exp": datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        "exp": datetime.utcnow() + timedelta(days=env.REFRESH_TOKEN_EXPIRE_DAYS)
     }
-    refresh_token = jwt.encode(refresh_claims, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    refresh_token = jwt.encode(refresh_claims, env.SECRET_KEY, algorithm=env.ALGORITHM)
 
     return {
         "access_token": access_token, 
@@ -44,7 +44,7 @@ def create_tokens(user_id: str, name: str):
 
 def _decode_token(token: str, expected_type: str) -> TokenPayload:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(token, env.SECRET_KEY, algorithms=[env.ALGORITHM])
         
         # Pydantic reads 'sub' from token and puts it into 'user_id'
         token_data = TokenPayload(**payload)
