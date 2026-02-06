@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 from ..schema.conversation import ConversationInput
 from ...services.conversation_service import ConversationService
-from ..schema.conversation import ConversationOutput, EndConversationInput
+from ..schema.conversation import ConversationOutput
+from uuid import UUID
 
 router = APIRouter(prefix="/conversation")
 
@@ -16,7 +17,7 @@ async def create_conversation_route(
 
 
 @router.post("/{conversation_id}/end")
-async def end_conversation_route(conversation_key: EndConversationInput) -> None:
-    if not conversation_key:
+async def end_conversation_route(conversation_id: UUID) -> None:
+    if not conversation_id:
         raise ValueError("conversation_id is required to end conversation.")
-    await conversation.end_conversation_service(conversation_key)
+    await conversation.end_conversation_service(conversation_id)

@@ -4,11 +4,10 @@ from ..api.schema.conversation import (
     Conversation,
     ConversationOutput,
     ConversationInput,
-    EndConversationInput,
 )
 from ..api.schema.message import Message
-from ..exceptions import DatabaseException
-from uuid import uuid4
+from ..exceptions import DatabaseException, NotFoundException
+from uuid import uuid4, UUID
 from datetime import datetime, UTC
 from seeders.seed_users import get_seed_users
 
@@ -68,7 +67,7 @@ class ConversationService:
         except Exception as e:
             raise DatabaseException(
                 message="An unexpected error occurred while creating the conversation.",
-                debug_info=repr(e),  # This will be hidden in Prod but visible in Dev
+                debug_info=repr(e),
             )
 
     async def update_conversation_service(
@@ -79,29 +78,49 @@ class ConversationService:
         conversation_key = conversation_input.conversation_key
 
         if not conversation_key:
-            raise ValueError("conversation_key is required to update conversation.")
+            raise ValueError("Conversation_key is required to update conversation.")
 
-        message = await self.message_db.insert(
-            Message(
-                message_id=uuid4(),
-                conversation_id=conversation_key,
-                content=conversation_input.content,
-                sender_name=self.user.name,
-                timestamp=str(self.now),
+        try:
+            message = await self.message_db.insert(
+                Message(
+                    message_id=uuid4(),
+                    conversation_id=conversation_key,
+                    content=conversation_input.content,
+                    sender_name=self.user.name,
+                    timestamp=str(self.now),
+                )
             )
-        )
+        except DatabaseException as e:
+            raise DatabaseException(
+                message="Failed to insert message.", debug_info=str(e)
+            )
 
-        await self.convo_db.insert_message_in_conversation(
-            conversation_id=conversation_key,
-            message_id=message.message_id,
-        )
+        try:
+            await self.convo_db.insert_message_in_conversation(
+                conversation_id=conversation_key,
+                message_id=message.message_id,
+            )
+        except NotFoundException as e:
+            raise NotFoundException(
+                message="Conversation_id does not exist.", debug_info=str(e)
+            )
+        except DatabaseException as e:
+            raise DatabaseException(
+                message="Failed to insert message", debug_info=str(e)
+            )
 
         return ConversationOutput(
             conversation_id=conversation_key,
             reply="Okay lang yannn",  # Hardcoded for now
         )
 
-    async def end_conversation_service(
-        self, conversation_id: EndConversationInput
-    ) -> None:
-        pass
+    async def end_conversation_service(self, conversation_id: UUID) -> None:
+
+        try:
+            await self.convo_db.partial_update(
+                set={"has_ended": True}, conversation_id=conversation_id
+            )
+        except DatabaseException as e:
+            raise DatabaseException(
+                message=("Failed to end conversation."), debug_info=(str(e))
+            )

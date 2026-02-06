@@ -17,10 +17,6 @@ class ConversationInput(BaseModel):
     content: str = Field(...)
 
 
-class EndConversationInput(BaseModel):
-    conversation_key: UUID = Field(...)
-
-
 class ConversationOutput(BaseModel):
     conversation_id: UUID = Field(...)
     reply: str = Field(...)
