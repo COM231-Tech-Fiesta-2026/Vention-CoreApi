@@ -5,8 +5,9 @@ from pydantic import BaseModel
 # from .mongo import db
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import DuplicateKeyError
+import uuid
 
-from ...config import env
+from ...config import env 
 from ...exceptions import DatabaseException, DuplicateException, NotFoundException
 
 client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
@@ -63,7 +64,7 @@ class BaseDatabase(Generic[ModelType]):
     collection_name: str
     model: Type[ModelType]
 
-    async def __init__(self):
+    def __init__(self):
         if not hasattr(self, "collection_name"):
             raise ValueError("collection_name must be set")
         if not hasattr(self, "model"):
@@ -90,8 +91,8 @@ class BaseDatabase(Generic[ModelType]):
         """
         try:
             data = item.model_dump()
-            data = self.normalize(data)
-            self.collection.insert_one(data)
+            data = await self.normalize(data)
+            await self.collection.insert_one(data)
             return item
         except DuplicateKeyError as e:
             raise DuplicateException from e
@@ -125,7 +126,7 @@ class BaseDatabase(Generic[ModelType]):
         """
         try:
             query = self.normalize(query)
-            doc = self.collection.find_one(query)
+            doc = await self.collection.find_one(query)
             if not doc:
                 raise NotFoundException(f"{self.model} not found. Query: {query}")
             doc["id"] = str(doc["_id"])
@@ -180,9 +181,9 @@ class BaseDatabase(Generic[ModelType]):
                 query_normalized = {"$and": [query_normalized, self.normalize(filter)]}
 
             if sort:
-                docs = self.collection.find(query_normalized).sort(sort)
+                docs = await self.collection.find(query_normalized).sort(sort)
             else:
-                docs = self.collection.find(query_normalized)
+                docs = await self.collection.find(query_normalized)
 
             models: list[ModelType] = []
             for doc in docs:
@@ -277,8 +278,8 @@ class BaseDatabase(Generic[ModelType]):
         """
         try:
             data = item.model_dump()
-            data = self.normalize(data)
-            query = self.normalize(query)
+            data = await self.normalize(data)
+            query = await self.normalize(query)
             result = self.collection.update_one(query, {"$set": data})
             if result.matched_count == 0:
                 raise NotFoundException(
@@ -305,7 +306,7 @@ class BaseDatabase(Generic[ModelType]):
                 push = self.normalize(push)
                 update_operations["$push"] = push
 
-            result = self.collection.update_one(query, update_operations)
+            result = await self.collection.update_one(query, update_operations)
             if result.matched_count == 0:
                 raise NotFoundException(
                     f"Failed to update {self.model}. Query: {query}"
@@ -349,9 +350,9 @@ class BaseDatabase(Generic[ModelType]):
             using broad queries to avoid unintended deletions.
         """
         try:
-            query = self.normalize(query)
-            deleted = self.get_many(**query)
-            result = self.collection.delete_many(query)
+            query = await self.normalize(query)
+            deleted = await self.get_many(**query)
+            result = await self.collection.delete_many(query)
             if result.deleted_count == 0:
                 raise NotFoundException(
                     f"Failed to delete {self.model}. Query: {query}"
