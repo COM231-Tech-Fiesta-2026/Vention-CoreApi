@@ -29,3 +29,23 @@ class DuplicateException(CoreApiException):
 class NotFoundException(CoreApiException):
     def __init__(self, message: str = "Resource not found.", debug_info: Any = None):
         super().__init__(message, debug_info, status_code=404)
+
+
+class UserNotFoundException(CoreApiException):
+    def __init__(
+        self,
+        message: str = "User not found.",
+        debug_info: Any | None = None,
+        status_code: int = 400,
+    ):
+        super().__init__(message, debug_info, status_code)
+
+
+class ConversationNotFoundException(CoreApiException):
+    def __init__(
+        self,
+        message: str = "The requested conversation could not be found.",
+        debug_info: Any | None = None,
+        status_code: int = 404,
+    ):
+        super().__init__(message, debug_info, status_code)
