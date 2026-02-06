@@ -1,11 +1,8 @@
-import os
 from typing import Dict
-from dotenv import load_dotenv
 from google import genai
+from src.ventio_api.config import env
 
-load_dotenv()
-
-API_KEY = os.getenv("GEMINI_API_KEY")
+API_KEY = env.GEMINI_API_KEY
 
 if not API_KEY:
     raise ValueError("GEMINI_API_KEY not found in .env file")

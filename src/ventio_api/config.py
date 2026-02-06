@@ -10,8 +10,7 @@ class Settings(BaseSettings):
     # ALGORITHM: str
     # ACCESS_TOKEN_EXPIRE_MINUTES: int
 
-    # LLM_API_KEY: str
-    # LLM_ENDPOINT: str
+   
 
     class Config:
         env_file = ".env"
