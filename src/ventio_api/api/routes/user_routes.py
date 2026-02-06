@@ -1,4 +1,3 @@
-import uuid as UIID
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.ventio_api.api.schema.auth import TokenPayload
 from src.ventio_api.infrastructure.database.users_db import UserDatabase
@@ -19,7 +18,7 @@ async def get_user_profile(
     user_service: UserService = Depends(get_user_service)
 ):
     try:
-        return await user_service.get_profile(UIID.UUID(payload.user_id))
+        return await user_service.get_profile(payload.user_id)
     except NotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
@@ -38,7 +37,7 @@ async def update_user_profile(
     user_service: UserService = Depends(get_user_service)
 ):
     try:
-        return await user_service.update_profile (UIID.UUID(payload.user_id), form_data)
+        return await user_service.update_profile(payload.user_id, form_data)
     except NotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
