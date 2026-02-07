@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 from uuid import UUID
 
 
@@ -20,3 +20,9 @@ class ConversationInput(BaseModel):
 class ConversationOutput(BaseModel):
     conversation_id: UUID = Field(...)
     reply: str = Field(...)
+
+
+class ConversationHistory(BaseModel):
+    conversation_id: UUID = Field(...)
+    # content: List[Dict[str, str]] = Field(...)
+    content: List[str] = Field(...)

@@ -38,7 +38,7 @@ async def seed_users():
 
 async def get_seed_users():
     user_db = UserDatabase()
-    user = await user_db.get(user_id="a425dca5-06e1-421d-a1f5-54ea2bd2a0c1")
+    user = await user_db.get(user_id="4a1108c0-309a-45b8-8e3e-b90c21e23da5")
     return user
 
 

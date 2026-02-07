@@ -4,18 +4,18 @@ from ..api.schema.conversation import (
     Conversation,
     ConversationOutput,
     ConversationInput,
+    ConversationHistory,
 )
+from ..api.schema.auth import AccessTokenContent
 from ..api.schema.message import Message
 from ..exceptions import (
     DatabaseException,
     NotFoundException,
-    UserNotFoundException,
     ConversationNotFoundException,
 )
 from typing import List
 from uuid import uuid4, UUID
 from datetime import datetime, UTC
-from seeders.seed_users import get_seed_users
 
 
 class ConversationService:
@@ -26,31 +26,21 @@ class ConversationService:
         self.now = datetime.now(UTC)
 
     async def process_message(
-        self, conversation_input: ConversationInput
+        self, conversation_input: ConversationInput, token: AccessTokenContent
     ) -> ConversationOutput:
 
         if conversation_input.conversation_key:
-            res = await self.update(conversation_input)
+            res = await self.update(conversation_input, token)
         else:
-            res = await self.create(conversation_input)
+            res = await self.create(conversation_input, token)
         return res
 
-    async def create(self, conversation_input: ConversationInput) -> ConversationOutput:
-
-        try:
-            self.user = await get_seed_users()  # hardcoded for now
-        except Exception as e:
-            raise UserNotFoundException(
-                message="Failed to fetch seed user data.", debug_info=str(e)
-            )
-
-        if not self.user:
-            raise UserNotFoundException(
-                "Required user record is missing from seed data."
-            )
+    async def create(
+        self, conversation_input: ConversationInput, token: AccessTokenContent
+    ) -> ConversationOutput:
 
         new_conversation = Conversation(
-            user_id=self.user.user_id,
+            user_id=token.user_id,
             conversation_id=uuid4(),
             messages_ids=[],
             has_ended=False,
@@ -62,7 +52,8 @@ class ConversationService:
             message_id=uuid4(),
             conversation_id=conversation.conversation_id,
             content=conversation_input.content,
-            sender_name=self.user.name,
+            reply="Okay lang yannnn",
+            sender_name=token.name,
             timestamp=str(self.now),
         )
         message = await self.message_db.insert(new_message)
@@ -77,17 +68,10 @@ class ConversationService:
             reply="Okay lang yannnn",  # hardcoded for now
         )
 
-    async def update(self, conversation_input: ConversationInput) -> ConversationOutput:
+    async def update(
+        self, conversation_input: ConversationInput, token: AccessTokenContent
+    ) -> ConversationOutput:
 
-        try:
-            self.user = await get_seed_users()
-        except Exception as e:
-            raise UserNotFoundException(
-                message="Failed to retrieve user context for update.", debug_info=str(e)
-            )
-
-        if not self.user:
-            raise UserNotFoundException(message="User session not found.")
         conversation_key = conversation_input.conversation_key
 
         if not conversation_key:  # must be added, because type safety requires it.
@@ -99,7 +83,8 @@ class ConversationService:
             message_id=uuid4(),
             conversation_id=conversation_key,
             content=conversation_input.content,
-            sender_name=self.user.name,
+            reply="Okay lang yannn!",
+            sender_name=token.name,
             timestamp=str(self.now),
         )
         message = await self.message_db.insert(new_message)
@@ -109,7 +94,7 @@ class ConversationService:
                 conversation_id=conversation_key,
                 message_id=message.message_id,
             )
-        except NotFoundException as e:
+        except NotFoundException:
             raise ConversationNotFoundException(
                 message=f"Conversation with ID {conversation_key} was not found.",
                 debug_info=f"Linked message_id: {message.message_id}",
@@ -131,8 +116,23 @@ class ConversationService:
                 message=("Failed to end conversation."), debug_info=(str(e))
             )
 
-    async def get(self, user_id: UUID) -> List[Conversation]:
+    async def get(self, token: AccessTokenContent) -> List[ConversationHistory]:
+        conversations = await self.convo_db.get_many(user_id=token.user_id)
+        result: List[ConversationHistory] = []
 
-        conversations = await self.convo_db.get_many(user_id=user_id)
+        for convo in conversations:
+            current_convo_messages: List[str] = []
 
-        return conversations
+            for m_id in convo.messages_ids:
+                msg_doc = await self.message_db.get_content(m_id)
+                if msg_doc and "content" in msg_doc:
+                    current_convo_messages.append(msg_doc["content"])
+
+            result.append(
+                ConversationHistory(
+                    conversation_id=convo.conversation_id,
+                    content=current_convo_messages,
+                )
+            )
+
+        return result

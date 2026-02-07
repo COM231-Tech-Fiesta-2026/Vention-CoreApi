@@ -10,7 +10,7 @@ from src.ventio_api.api.schema.auth import TokenPayload
 from src.ventio_api.exceptions import InvalidToken
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/signin")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -28,6 +28,7 @@ def create_tokens(user_id: str, name: str) -> dict[str, str]:
     access_claims: dict[str, Any] = {
         "sub": user_id,
         "name": name,
+        "type": "access",
         "exp": datetime.now(UTC) + timedelta(days=env.ACCESS_TOKEN_EXPIRE_DAYS),
     }
     access_token = jwt.encode(access_claims, env.SECRET_KEY, algorithm=env.ALGORITHM)
