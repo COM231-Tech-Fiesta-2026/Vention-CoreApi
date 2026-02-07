@@ -5,7 +5,7 @@ import uuid
 
 from src.ventio_api.services.auth_service import AuthService
 from src.ventio_api.api.schema.user import UserSignup
-from src.ventio_api.models.user import User
+from src.ventio_api.models.user_model import User
 
 # ADDED: NotFoundException
 from src.ventio_api.exceptions import (

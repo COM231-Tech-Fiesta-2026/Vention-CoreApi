@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, UTC
-from src.ventio_api.models.user import User
+from src.ventio_api.models.user_model import User
 from src.ventio_api.api.schema.user import UserSignup
 from src.ventio_api.core.utils import calculate_age
 from ..infrastructure.database.users_db import UserDatabase

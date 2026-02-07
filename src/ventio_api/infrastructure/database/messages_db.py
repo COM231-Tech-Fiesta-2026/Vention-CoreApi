@@ -1,5 +1,5 @@
 from src.ventio_api.infrastructure.database.base_database import BaseDatabase
-from src.ventio_api.api.schema.message import Message
+from ...models.message_model import Message
 from typing import List
 from uuid import UUID
 from ...exceptions import NotFoundException

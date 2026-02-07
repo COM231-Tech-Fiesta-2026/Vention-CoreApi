@@ -1,6 +1,6 @@
 from uuid import UUID
 from src.ventio_api.api.schema.user import UserUpdate
-from src.ventio_api.models.user import User
+from src.ventio_api.models.user_model import User
 from ..infrastructure.database.users_db import UserDatabase
 
 

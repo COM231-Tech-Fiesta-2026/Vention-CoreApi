@@ -1,4 +1,4 @@
-from src.ventio_api.models.user import User
+from src.ventio_api.models.user_model import User
 from uuid import uuid4
 from datetime import date
 from src.ventio_api.infrastructure.database.users_db import UserDatabase

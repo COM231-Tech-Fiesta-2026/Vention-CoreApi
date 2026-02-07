@@ -1,6 +1,6 @@
 from uuid import UUID
 from .base_database import BaseDatabase
-from src.ventio_api.api.schema.conversation import Conversation
+from ...models.conversation_model import Conversation
 from typing import List
 
 

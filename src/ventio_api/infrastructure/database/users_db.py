@@ -3,7 +3,7 @@ from datetime import datetime
 from src.ventio_api.core.utils import calculate_age, to_mongo_dict
 from src.ventio_api.infrastructure.database.base_database import BaseDatabase
 from src.ventio_api.api.schema.user import UserUpdate
-from src.ventio_api.models.user import User
+from src.ventio_api.models.user_model import User
 from src.ventio_api.exceptions import (
     NotFoundException,
     DatabaseException,

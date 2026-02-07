@@ -1,13 +1,11 @@
 from ..infrastructure.database.messages_db import MessageDatabase
 from ..infrastructure.database.conversations_db import ConversationDatabase
 from ..api.schema.conversation import (
-    Conversation,
     ConversationOutput,
     ConversationInput,
     ConversationHistory,
 )
 from ..api.schema.auth import AccessTokenContent
-from ..api.schema.message import Message
 from ..exceptions import (
     DatabaseException,
     NotFoundException,
@@ -16,7 +14,8 @@ from ..exceptions import (
 from typing import List
 from uuid import uuid4, UUID
 from datetime import datetime, UTC
-
+from ..models.conversation_model import Conversation
+from ..models.message_model import Message
 
 class ConversationService:
 
