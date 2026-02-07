@@ -116,23 +116,38 @@ class ConversationService:
                 message=("Failed to end conversation."), debug_info=(str(e))
             )
 
-    async def get(self, token: AccessTokenContent) -> List[ConversationHistory]:
-        conversations = await self.convo_db.get_many(user_id=token.user_id)
+    async def get(
+        self,
+        token: AccessTokenContent,
+        limit: int = 15,
+        offset: int = 0,
+        convo_limit: int = 3,
+    ) -> List[ConversationHistory]:
+        # limits the conversations to the latest 3
+        conversations = await self.convo_db.get_latest_conversation(
+            user_id=token.user_id, limit=convo_limit
+        )
         result: List[ConversationHistory] = []
 
         for convo in conversations:
-            current_convo_messages: List[str] = []
+            # calculates the slice range (e.g, limit=15, offset=15 -> [30: 15])
+            start = -(offset + limit)
+            end = -offset if offset > 0 else None
 
-            for m_id in convo.messages_ids:
-                msg_doc = await self.message_db.get_content(m_id)
-                if msg_doc and "content" in msg_doc:
-                    current_convo_messages.append(msg_doc["content"])
+            paged_ids = convo.messages_ids[start:end]
 
-            result.append(
-                ConversationHistory(
-                    conversation_id=convo.conversation_id,
-                    content=current_convo_messages,
+            if paged_ids:
+                current_convo_messages = await self.message_db.get_messages_by_ids(
+                    paged_ids
                 )
-            )
+                # sorts the messages based on the timestamp
+                current_convo_messages.sort(key=lambda x: x.timestamp)
+
+                result.append(
+                    ConversationHistory(
+                        conversation_id=convo.conversation_id,
+                        messages=current_convo_messages,
+                    )
+                )
 
         return result

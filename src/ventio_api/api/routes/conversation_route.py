@@ -38,6 +38,8 @@ async def end_conversation_route(
 @router.get("/")
 async def get_conversations_route(
     token: AccessTokenContent = Depends(get_current_user_payload),
+    limit: int = 15,
+    offset: int = 0,
 ) -> list[ConversationHistory]:
 
     conversations = await conversation.get(token)

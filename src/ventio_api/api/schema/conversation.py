@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, List
 from uuid import UUID
+from .message import Message
 
 
 class Conversation(BaseModel):
@@ -24,5 +25,4 @@ class ConversationOutput(BaseModel):
 
 class ConversationHistory(BaseModel):
     conversation_id: UUID = Field(...)
-    # content: List[Dict[str, str]] = Field(...)
-    content: List[str] = Field(...)
+    messages: List[Message] = Field(...)

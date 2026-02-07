@@ -1,6 +1,7 @@
 from uuid import UUID
 from .base_database import BaseDatabase
 from src.ventio_api.api.schema.conversation import Conversation
+from typing import List
 
 
 class ConversationDatabase(BaseDatabase[Conversation]):
@@ -16,3 +17,10 @@ class ConversationDatabase(BaseDatabase[Conversation]):
         return await self.partial_update(
             push={"messages_ids": message_id}, conversation_id=conversation_id
         )
+
+    async def get_latest_conversation(
+        self, user_id: UUID, limit: int = 0
+    ) -> List[Conversation]:
+
+        conversations = self.collection.find({"user_id": user_id}).limit(limit)
+        return [self.model(**doc) async for doc in conversations]

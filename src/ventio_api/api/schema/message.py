@@ -10,7 +10,3 @@ class Message(BaseModel):
     reply: Optional[str] = None
     sender_name: str = Field(...)
     timestamp: str = Field(...)
-
-
-class MessageContent(BaseModel):
-    content: str = Field(...)
