@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Any, Generic, Optional, Type, TypeVar
 from pydantic import BaseModel
 
-# from .mongo import db
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import DuplicateKeyError
 
