@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.ventio_api.infrastructure.database.base_database import client
+from src.ventio_api.api.routes import auth_routes, user_routes
+
 
 
 # Health check
@@ -19,6 +22,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(auth_routes.router)
+app.include_router(user_routes.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")

@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_DAYS: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 120
 
-    # LLM_API_KEY: str
-    # LLM_ENDPOINT: str
+    LLM_API_KEY: str
+    LLM_ENDPOINT: str
 
     class Config:
         env_file = ".env"
