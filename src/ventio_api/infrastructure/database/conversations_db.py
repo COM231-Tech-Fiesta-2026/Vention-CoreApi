@@ -1,6 +1,7 @@
 from uuid import UUID
 from .base_database import BaseDatabase
 from ...models.conversation_model import Conversation
+import datetime
 from typing import List
 
 
@@ -24,3 +25,8 @@ class ConversationDatabase(BaseDatabase[Conversation]):
 
         conversations = self.collection.find({"user_id": user_id}).limit(limit)
         return [self.model(**doc) async for doc in conversations]
+
+    async def get_stale_converstations(
+        self, time_threshold: datetime.datetime
+    ) -> list[Conversation]:
+        return await self.get_many(last_message_at={"$lte": time_threshold})
