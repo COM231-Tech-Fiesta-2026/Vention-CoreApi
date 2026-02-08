@@ -13,7 +13,7 @@ from ...exceptions import DatabaseException, DuplicateException, NotFoundExcepti
 client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
     env.MONGODB_LOCAL_URL, uuidRepresentation="standard"
 )
-db = client["iconnect"]
+db = client["vention"]
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
 
@@ -125,7 +125,7 @@ class BaseDatabase(Generic[ModelType]):
 
         """
         try:
-            query = self.normalize(query)
+            query = await self.normalize(query)
             doc = await self.collection.find_one(query)
             if not doc:
                 raise NotFoundException(f"{self.model} not found. Query: {query}")
@@ -181,12 +181,12 @@ class BaseDatabase(Generic[ModelType]):
                 query_normalized = {"$and": [query_normalized, self.normalize(filter)]}
 
             if sort:
-                docs = await self.collection.find(query_normalized).sort(sort)
+                docs = self.collection.find(query_normalized).sort(sort)
             else:
-                docs = await self.collection.find(query_normalized)
+                docs = self.collection.find(query_normalized)
 
             models: list[ModelType] = []
-            for doc in docs:
+            async for doc in docs:
                 doc["id"] = str(doc["_id"])
                 doc.pop("_id", None)
                 model = self.model(**doc)
@@ -232,14 +232,14 @@ class BaseDatabase(Generic[ModelType]):
             query: dict[str, Any] = {"$and": [{"$or": or_conditions}]}
 
             if additional_filters:
-                normalized_filters = self.normalize(additional_filters)
+                normalized_filters = await self.normalize(additional_filters)
                 for key, value in normalized_filters.items():
                     query["$and"].append({key: value})
 
             docs = self.collection.find(query)
 
             models: list[ModelType] = []
-            for doc in docs:
+            async for doc in docs:
                 doc["id"] = str(doc["_id"])
                 doc.pop("_id", None)
                 model = self.model(**doc)
@@ -280,7 +280,7 @@ class BaseDatabase(Generic[ModelType]):
             data = item.model_dump()
             data = await self.normalize(data)
             query = await self.normalize(query)
-            result = self.collection.update_one(query, {"$set": data})
+            result = await self.collection.update_one(query, {"$set": data})
             if result.matched_count == 0:
                 raise NotFoundException(
                     f"Failed to update {self.model}. Query: {query}"
@@ -300,10 +300,10 @@ class BaseDatabase(Generic[ModelType]):
         try:
             update_operations: dict[str, dict[Any, Any]] = {}
             if set is not None:
-                set = self.normalize(set)
+                set = await self.normalize(set)
                 update_operations["$set"] = set
             if push is not None:
-                push = self.normalize(push)
+                push = await self.normalize(push)
                 update_operations["$push"] = push
 
             result = await self.collection.update_one(query, update_operations)
@@ -312,7 +312,7 @@ class BaseDatabase(Generic[ModelType]):
                     f"Failed to update {self.model}. Query: {query}"
                 )
 
-            model = self.get(**query)
+            model = await self.get(**query)
             return model
         except NotFoundException as e:
             raise

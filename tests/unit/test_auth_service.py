@@ -79,7 +79,7 @@ async def test_signin_success(auth_service, mock_user_db):
     hashed_pw = get_password_hash(real_password)
     
     existing_user = User(
-        user_id=uuid.uuid4(),
+        id=uuid.uuid4(),
         name="Login User",
         username="login_test",
         pass_hash=hashed_pw,
@@ -105,7 +105,7 @@ async def test_signin_wrong_password(auth_service, mock_user_db):
     
     hashed_pw = get_password_hash("correct_password")
     existing_user = User(
-        user_id=uuid.uuid4(),
+        id=uuid.uuid4(),
         name="User",
         username="user",
         pass_hash=hashed_pw,

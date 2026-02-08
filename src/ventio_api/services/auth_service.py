@@ -22,7 +22,7 @@ class AuthService:
         age = calculate_age(user.birthday)
         
         new_user = User(
-            user_id=user_id_obj,
+            id=user_id_obj,
             name=user.name,
             username=user.username,
             pass_hash=get_password_hash(user.password),
