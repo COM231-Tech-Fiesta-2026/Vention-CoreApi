@@ -35,7 +35,7 @@ async def end_conversation_route(
     await conversation.close(conversation_id)
 
 
-@router.get("/")
+@router.get("")
 async def get_conversations_route(
     token: AccessTokenContent = Depends(get_current_user_payload),
     limit: int = 15,

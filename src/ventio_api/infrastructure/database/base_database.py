@@ -11,7 +11,7 @@ from ...exceptions import DatabaseException, DuplicateException, NotFoundExcepti
 client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
     env.MONGODB_LOCAL_URL, uuidRepresentation="standard"
 )
-db = client["iconnect"]
+db = client["vention"]
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
 
