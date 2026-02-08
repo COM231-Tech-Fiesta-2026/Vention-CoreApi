@@ -4,7 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.ventio_api.infrastructure.database.base_database import client
 from fastapi.middleware.cors import CORSMiddleware
-from src.ventio_api.api.routes import auth_routes, user_routes, conversation_route
+from src.ventio_api.api.routes import (
+    auth_routes,
+    user_routes,
+    conversation_route,
+    summary_route,
+)
 
 
 # Health check
@@ -28,6 +33,7 @@ router = APIRouter(prefix="/api/v1")
 router.include_router(auth_routes.router)
 router.include_router(user_routes.router)
 router.include_router(conversation_route.router)
+router.include_router(summary_route.router)
 
 app.include_router(router)
 
