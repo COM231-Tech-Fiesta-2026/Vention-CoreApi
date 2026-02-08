@@ -2,12 +2,10 @@ from enum import Enum
 from typing import Any, Generic, Optional, Type, TypeVar
 from pydantic import BaseModel
 
-# from .mongo import db
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import DuplicateKeyError
-import uuid
 
-from ...config import env 
+from ...config import env
 from ...exceptions import DatabaseException, DuplicateException, NotFoundException
 
 client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
@@ -95,9 +93,9 @@ class BaseDatabase(Generic[ModelType]):
             await self.collection.insert_one(data)
             return item
         except DuplicateKeyError as e:
-            raise DuplicateException from e
+            raise DuplicateException(f"Duplicate entry found: {str(e)}") from e
         except Exception as e:
-            raise DatabaseException from e
+            raise DatabaseException(f"Database operation failed: {str(e)}") from e
 
     async def get(self, **query: Any) -> ModelType:
         """
@@ -133,7 +131,7 @@ class BaseDatabase(Generic[ModelType]):
             doc.pop("_id", None)
             return self.model(**doc)
         except NotFoundException as e:
-            raise
+            raise NotFoundException from e
         except Exception as e:
             raise DatabaseException from e
 
@@ -176,9 +174,12 @@ class BaseDatabase(Generic[ModelType]):
         try:
             sort = query.pop("sort", None)
             filter = query.pop("filter", {})
-            query_normalized = self.normalize(query)
+            query_normalized = await self.normalize(query)
+
             if filter:
-                query_normalized = {"$and": [query_normalized, self.normalize(filter)]}
+                query_normalized = {
+                    "$and": [query_normalized, await self.normalize(filter)]
+                }
 
             if sort:
                 docs = self.collection.find(query_normalized).sort(sort)

@@ -1,10 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.ventio_api.infrastructure.database.base_database import client
-from src.ventio_api.api.routes import auth_routes, user_routes
-
+from fastapi.middleware.cors import CORSMiddleware
+from src.ventio_api.api.routes import auth_routes, user_routes, conversation_route
 
 
 # Health check
@@ -12,9 +12,9 @@ from src.ventio_api.api.routes import auth_routes, user_routes
 async def lifespan(app: FastAPI):
     try:
         await client.admin.command("ping")
-        print("✅ MongoDB connected successfully!")
+        print("MongoDB connected successfully!")
     except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
+        print(f"MongoDB connection failed: {e}")
 
     yield
 
@@ -23,8 +23,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(auth_routes.router)
-app.include_router(user_routes.router)
+router = APIRouter(prefix="/api/v1")
+
+router.include_router(auth_routes.router)
+router.include_router(user_routes.router)
+router.include_router(conversation_route.router)
+
+app.include_router(router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
