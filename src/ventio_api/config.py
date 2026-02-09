@@ -1,4 +1,7 @@
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Settings(BaseSettings):
@@ -6,11 +9,18 @@ class Settings(BaseSettings):
     MONGODB_DB_NAME: str
     GEMINI_API_KEY: str
 
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_DAYS: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 120
+
+    # LLM_API_KEY: str
+    # LLM_ENDPOINT: str
+
     class Config:
         env_file = ".env"
 
 
-env = Settings()
 
 # LLM Configuration
 #MAX_CONTEXT_CHARS = 6000   #Ginagamit ni gemini.py sa line 16 to limit context size ginagamit kolang sya to save tokens  
@@ -78,3 +88,4 @@ IMPORTANT: You must respond ONLY with valid JSON in this exact format:
   "description": "summary here"
 }
 """
+env = Settings()  # type: ignore

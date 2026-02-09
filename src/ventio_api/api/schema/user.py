@@ -1,16 +1,30 @@
-from pydantic import BaseModel, Field
-from enum import Enum
-from uuid import UUID
+from pydantic import BaseModel
+from typing import Optional, Literal
+from datetime import date
 
-class UserGender(str, Enum):
-	MALE = "MALE"
-	FEMALE = "FEMALE"
 
-class User(BaseModel):
-	user_id: UUID = Field(...)
-	name: str = Field(...)
-	username: str = Field(...)
-	pass_hash: str = Field(...)
-	bday: str = Field(...)
-	age: int = Field(...)
-	gender: UserGender = Field(...)
+class UserSignup(BaseModel):
+    name: str
+    username: str
+    password: str
+    birthday: date
+    gender: Literal["M", "F"]
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    birthday: Optional[date] = None
+    gender: Optional[Literal["M", "F"]] = None
+    bio: Optional[str] = ""
+
+
+class UserProfile(BaseModel):
+    name: str
+    birthday: date
+    gender: Literal["M", "F"]
+    bio: Optional[str] = ""
