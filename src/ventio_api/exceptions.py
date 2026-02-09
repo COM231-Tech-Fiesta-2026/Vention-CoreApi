@@ -20,6 +20,21 @@ class CoreApiException(Exception):
         super().__init__(self.message)
 
 
+
+
+class LLMException(CoreApiException): ...
+
+
+
+class LLMAuthenticationException(LLMException): ...
+
+
+
+class LLMQuotaExhaustedException(LLMException): ...
+
+
+
+class LLMConnectionException(LLMException): ...
 class DatabaseException(CoreApiException):
     def __init__(
         self, message: str = "A database error occured.", debug_info: Any = None
