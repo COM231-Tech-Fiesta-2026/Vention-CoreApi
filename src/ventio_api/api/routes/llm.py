@@ -21,7 +21,7 @@ async def ask(
     llm_service: LLMService = Depends(get_llm_service)
 ):
     try:
-        reply = await llm_service.ask_llm(data.conversation_id, data.prompt)
+        reply = await llm_service.ask_llm(data.conversation_id, data.prompt, data.mode)
         return {"reply": reply}
     except LLMAuthenticationException as e:
         raise HTTPException(status_code=401, detail=str(e))

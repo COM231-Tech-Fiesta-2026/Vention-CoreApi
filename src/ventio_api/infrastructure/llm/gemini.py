@@ -1,6 +1,6 @@
 from typing import Dict
 from google import genai
-from src.ventio_api.config import env, MAX_CONTEXT_CHARS, MAX_REPLY_CHARS, SYSTEM_PROMPT
+from src.ventio_api.config import env, MAX_CONTEXT_CHARS, MAX_REPLY_CHARS
 
 
 class GeminiClient:
@@ -18,10 +18,10 @@ class GeminiClient:
     def clear_context(self, conversation_id: str) -> None:
         self._contexts.pop(conversation_id, None)
     
-    async def generate_reply(self, conversation_id: str, prompt: str) -> str:
+    async def generate_reply(self, conversation_id: str, prompt: str, system_prompt: str) -> str:
         history = self.get_context(conversation_id)
         history += f"\nUser: {prompt}"
-        full_prompt = f"{SYSTEM_PROMPT}\n\nConversation so far:\n{history}"
+        full_prompt = f"{system_prompt}\n\nConversation so far:\n{history}"
         
         response = self.client.models.generate_content(
             model="gemini-2.5-flash",

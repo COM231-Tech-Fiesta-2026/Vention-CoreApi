@@ -1,5 +1,6 @@
+import json
 from src.ventio_api.infrastructure.llm.gemini import GeminiClient
-from src.ventio_api.config import SUMMARIZE_PROMPT
+from src.ventio_api.config import COMFORT_PROMPT, GUIDANCE_PROMPT, SUMMARIZE_PROMPT
 from src.ventio_api.exceptions import (
     LLMAuthenticationException,
     LLMQuotaExhaustedException,
@@ -8,10 +9,19 @@ from src.ventio_api.exceptions import (
 
 
 class LLMService:
-    async def ask_llm(self, conversation_id: str, prompt: str) -> str:
+    async def ask_llm(self, conversation_id: str, prompt: str, mode: str = "comfort") -> str:
+        # Select prompt based on mode
+        if mode == "comfort":
+            selected_prompt = COMFORT_PROMPT
+        elif mode == "guidance":
+            selected_prompt = GUIDANCE_PROMPT
+        else:
+            # Default to comfort if mode is not recognized
+            selected_prompt = COMFORT_PROMPT
+        
         gemini_client = GeminiClient()
         try:
-            return await gemini_client.generate_reply(conversation_id, prompt)
+            return await gemini_client.generate_reply(conversation_id, prompt, selected_prompt)
         except Exception as e:
             error_msg = str(e).lower()
             
@@ -37,10 +47,23 @@ async def summarize(conversation_text: str) -> dict:
         
         response_text = response.text
         
+        # Remove markdown code blocks if present
+        response_text = response_text.strip()
+        if response_text.startswith("```"):
+            # Remove opening ```json or ```
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:].strip()
+            # Get everything before closing ```
+            response_text = response_text.split("```")[0].strip()
+        
+        # Parse JSON response
+        parsed = json.loads(response_text)
+        
         return {
-            "title": "",
-            "user_feelings": "",
-            "description": response_text
+            "title": parsed.get("title", ""),
+            "user_feelings": parsed.get("user_feelings", ""),
+            "description": parsed.get("description", "")
         }
     except Exception as e:
         error_msg = str(e).lower()
