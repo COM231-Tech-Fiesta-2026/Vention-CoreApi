@@ -1,5 +1,8 @@
 import asyncio
-from src.ventio_api.services.llm_service import summarize
+from src.ventio_api.services.llm_service import LLMService
+
+llm = LLMService()
+
 
 async def test():
     conversation = """
@@ -10,10 +13,11 @@ async def test():
     User: Yeah, I think I should talk to my boss. Thanks for listening
     AI: You're welcome. Remember, it's okay to set boundaries
     """
-    
-    result = await summarize(conversation)
+
+    result = await llm.summarize(conversation)
     print("Result:")
     print(result)
+
 
 if __name__ == "__main__":
     asyncio.run(test())

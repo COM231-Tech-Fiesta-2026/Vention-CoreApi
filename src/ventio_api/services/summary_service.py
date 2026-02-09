@@ -5,6 +5,7 @@ from ..models.conversation_model import Conversation
 from ..core.utils import get_now
 from ..models.summary_model import Summary
 from ..infrastructure.database.messages_db import MessageDatabase
+from .llm_service import LLMService
 
 
 class SummaryService:
@@ -13,6 +14,7 @@ class SummaryService:
         self.summary_db = SummaryDatabase()
         self.convo_db = ConversationDatabase()
         self.message_db = MessageDatabase()
+        self.llm_service = LLMService()
 
     async def get_summaries(self, token: AccessTokenContent) -> list[Summary]:
         conversations = await self.convo_db.get_latest_conversation(
@@ -28,20 +30,16 @@ class SummaryService:
 
     async def summarize_conversations(self, conversation: Conversation):
 
-        llm_output: dict[str, str] = {  # mock for llm
-            "title": "Malungkot si user ;(",
-            "user_feelings": "Malungkot",
-            "description": "Malungkot si user, umiiyak :(",
-        }
+        summary = await self.llm_service.summarize(
+            conversation_id=conversation.conversation_id
+        )
 
         new_summary = Summary(
             conversation_id=conversation.conversation_id,
             user_id=conversation.user_id,
-            title=llm_output["title"],  # change this after integrating llm
-            user_feelings=llm_output[
-                "user_feelings"
-            ],  # change this after integrating llm
-            description=llm_output["description"],  # change this after integrating llm
+            title=summary.title,
+            user_feelings=summary.user_feelings,
+            description=summary.description,
             timestamp=str(get_now()),
         )
 

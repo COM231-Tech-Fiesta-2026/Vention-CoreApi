@@ -9,3 +9,9 @@ class PromptRequest(BaseModel):
 
 class PromptResponse(BaseModel):
     reply: str
+
+
+class SummarizeResponse(BaseModel):
+    title: str
+    user_feelings: str
+    description: str

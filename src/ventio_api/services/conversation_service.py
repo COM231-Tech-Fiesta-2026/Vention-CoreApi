@@ -8,12 +8,14 @@ from ..api.schema.auth import AccessTokenContent
 from ..exceptions import (
     NotFoundException,
     ConversationNotFoundException,
+    LLMConnectionException,
 )
 from uuid import uuid4, UUID
 from ..models.conversation_model import Conversation
 from ..models.message_model import Message
 from ..infrastructure.database.summaries_db import SummaryDatabase
 from .summary_service import SummaryService
+from .llm_service import LLMService
 from ..core.utils import get_now
 
 
@@ -24,6 +26,7 @@ class ConversationService:
         self.message_db = MessageDatabase()
         self.summary_db = SummaryDatabase()
         self.summary_service = SummaryService()
+        self.llm_service = LLMService()
 
     async def process_message(
         self, conversation_input: ConversationInput, token: AccessTokenContent
@@ -49,11 +52,20 @@ class ConversationService:
         )
         conversation = await self.convo_db.insert(new_conversation)
 
+        updated_input = conversation_input.model_copy(
+            update={"conversation_key": conversation.conversation_id}
+        )
+
+        reply = await self.llm_service.ask_llm(updated_input)
+
+        if not reply:
+            raise LLMConnectionException
+
         new_message = Message(
             message_id=uuid4(),
             conversation_id=conversation.conversation_id,
             content=conversation_input.content,
-            reply="Okay lang yannnn",
+            reply=reply,
             sender_name=token.name,
             timestamp=str(get_now()),
         )
@@ -65,8 +77,7 @@ class ConversationService:
         )
 
         return ConversationOutput(
-            conversation_id=conversation.conversation_id,
-            reply="Okay lang yannnn",  # hardcoded for now
+            conversation_id=conversation.conversation_id, reply=reply
         )
 
     async def update(
@@ -80,11 +91,13 @@ class ConversationService:
                 "Conversation_key is required to update conversation."
             )
 
+        reply = await self.llm_service.ask_llm(conversation_input)
+
         new_message = Message(
             message_id=uuid4(),
             conversation_id=conversation_key,
             content=conversation_input.content,
-            reply="Okay lang yannn!",
+            reply=reply,
             sender_name=token.name,
             timestamp=str(get_now()),
         )
@@ -101,10 +114,7 @@ class ConversationService:
                 debug_info=f"Linked message_id: {message.message_id}",
             )
 
-        return ConversationOutput(
-            conversation_id=conversation_key,
-            reply="Okay lang yannn",  # Hardcoded for now
-        )
+        return ConversationOutput(conversation_id=conversation_key, reply=reply)
 
     async def end(self, conversation_id: UUID) -> None:
 
