@@ -1,6 +1,6 @@
 from typing import Dict
 from google import genai
-from src.ventio_api.config import env, MAX_CONTEXT_CHARS, MAX_REPLY_CHARS
+from src.ventio_api.config import env, MAX_REPLY_CHARS
 
 
 class GeminiClient:
@@ -13,7 +13,7 @@ class GeminiClient:
         return self._contexts.get(conversation_id, "")
     
     def save_context(self, conversation_id: str, history: str) -> None:
-        self._contexts[conversation_id] = history[-MAX_CONTEXT_CHARS:]
+        self._contexts[conversation_id] = history
     
     def clear_context(self, conversation_id: str) -> None:
         self._contexts.pop(conversation_id, None)

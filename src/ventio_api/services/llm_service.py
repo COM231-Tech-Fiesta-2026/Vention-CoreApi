@@ -1,4 +1,5 @@
 import json
+from pydantic import BaseModel
 from src.ventio_api.infrastructure.llm.gemini import GeminiClient
 from src.ventio_api.config import COMFORT_PROMPT, GUIDANCE_PROMPT, SUMMARIZE_PROMPT
 from src.ventio_api.exceptions import (
@@ -8,7 +9,16 @@ from src.ventio_api.exceptions import (
 )
 
 
+class SummarizeResponse(BaseModel):
+    title: str
+    user_feelings: str
+    description: str
+
+
 class LLMService:
+    def __init__(self):
+        self.gemini_client = GeminiClient()
+    
     async def ask_llm(self, conversation_id: str, prompt: str, mode: str = "comfort") -> str:
         # Select prompt based on mode
         if mode == "comfort":
@@ -19,9 +29,8 @@ class LLMService:
             # Default to comfort if mode is not recognized
             selected_prompt = COMFORT_PROMPT
         
-        gemini_client = GeminiClient()
         try:
-            return await gemini_client.generate_reply(conversation_id, prompt, selected_prompt)
+            return await self.gemini_client.generate_reply(conversation_id, prompt, selected_prompt)
         except Exception as e:
             error_msg = str(e).lower()
             
@@ -35,7 +44,7 @@ class LLMService:
                 raise
 
 
-async def summarize(conversation_text: str) -> dict:
+async def summarize(conversation_text: str) -> SummarizeResponse:
     gemini_client = GeminiClient()
     try:
         full_prompt = f"{SUMMARIZE_PROMPT}\n\nConversation:\n{conversation_text}"
@@ -60,11 +69,11 @@ async def summarize(conversation_text: str) -> dict:
         # Parse JSON response
         parsed = json.loads(response_text)
         
-        return {
-            "title": parsed.get("title", ""),
-            "user_feelings": parsed.get("user_feelings", ""),
-            "description": parsed.get("description", "")
-        }
+        return SummarizeResponse(
+            title=parsed.get("title", ""),
+            user_feelings=parsed.get("user_feelings", ""),
+            description=parsed.get("description", "")
+        )
     except Exception as e:
         error_msg = str(e).lower()
         

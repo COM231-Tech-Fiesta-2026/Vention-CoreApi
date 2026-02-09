@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 env = Settings()
 
 # LLM Configuration
-MAX_CONTEXT_CHARS = 6000
+#MAX_CONTEXT_CHARS = 6000   #Ginagamit ni gemini.py sa line 16 to limit context size ginagamit kolang sya to save tokens  
 MAX_REPLY_CHARS = 600
 
 
