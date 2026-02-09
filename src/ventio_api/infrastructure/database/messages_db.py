@@ -3,6 +3,7 @@ from ...models.message_model import Message
 from typing import List
 from uuid import UUID
 from ...exceptions import MessageNotFoundException
+from ...api.schema.message import MessageContext
 
 
 class MessageDatabase(BaseDatabase[Message]):
@@ -28,3 +29,11 @@ class MessageDatabase(BaseDatabase[Message]):
             raise MessageNotFoundException(
                 f"No messages found to delete for conversation {conversation_id}"
             )
+
+    async def get_messages_by_id(self, conversation_id: UUID) -> list[MessageContext]:
+        projection = {"content": 1, "reply": 1, "_id": 0}
+
+        cursor = self.collection.find({"conversation_id": conversation_id}, projection)
+
+        # Returning as a list of dictionaries
+        return [MessageContext(**doc) async for doc in cursor]
