@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from typing import Any, Union
 from bson import ObjectId
+from datetime import datetime, timezone
 import uuid
 
 
@@ -49,3 +50,7 @@ def format_db_id(id_val: Any) -> Union[ObjectId, uuid.UUID, str]:
         pass
 
     return id_val
+
+
+def get_now():
+    return datetime.now(timezone.utc).isoformat()

@@ -79,3 +79,21 @@ class AuthorizationException(Exception):
     """Raised when authentication fails, tokens are invalid, or permissions are denied."""
 
     pass
+
+
+class InvalidStateTransitionException(CoreApiException):
+    """Raised if user ended the already ended coversation."""
+
+    def __init__(
+        self,
+        message: str = "The conversation is already ended.",
+        debug_info: Any | None = None,
+        status_code: int = 400,
+    ):
+        super().__init__(message, debug_info, status_code)
+
+
+class MessageNotFoundException(CoreApiException):
+    """Raised if the given message_id does not exists."""
+
+    pass

@@ -3,26 +3,27 @@ from ..infrastructure.database.conversations_db import ConversationDatabase
 from ..api.schema.conversation import (
     ConversationOutput,
     ConversationInput,
-    ConversationHistory,
 )
 from ..api.schema.auth import AccessTokenContent
 from ..exceptions import (
-    DatabaseException,
     NotFoundException,
     ConversationNotFoundException,
 )
-from typing import List
 from uuid import uuid4, UUID
-from datetime import datetime, UTC
 from ..models.conversation_model import Conversation
 from ..models.message_model import Message
+from ..infrastructure.database.summaries_db import SummaryDatabase
+from .summary_service import SummaryService
+from ..core.utils import get_now
+
 
 class ConversationService:
 
     def __init__(self):
         self.convo_db = ConversationDatabase()
         self.message_db = MessageDatabase()
-        self.now = datetime.now(UTC)
+        self.summary_db = SummaryDatabase()
+        self.summary_service = SummaryService()
 
     async def process_message(
         self, conversation_input: ConversationInput, token: AccessTokenContent
@@ -41,9 +42,10 @@ class ConversationService:
         new_conversation = Conversation(
             user_id=token.user_id,
             conversation_id=uuid4(),
+            mode=conversation_input.mode,
             messages_ids=[],
             has_ended=False,
-            last_message_timestamp=str(self.now),
+            last_message_timestamp=str(get_now()),
         )
         conversation = await self.convo_db.insert(new_conversation)
 
@@ -53,7 +55,7 @@ class ConversationService:
             content=conversation_input.content,
             reply="Okay lang yannnn",
             sender_name=token.name,
-            timestamp=str(self.now),
+            timestamp=str(get_now()),
         )
         message = await self.message_db.insert(new_message)
 
@@ -84,7 +86,7 @@ class ConversationService:
             content=conversation_input.content,
             reply="Okay lang yannn!",
             sender_name=token.name,
-            timestamp=str(self.now),
+            timestamp=str(get_now()),
         )
         message = await self.message_db.insert(new_message)
 
@@ -104,49 +106,13 @@ class ConversationService:
             reply="Okay lang yannn",  # Hardcoded for now
         )
 
-    async def close(self, conversation_id: UUID) -> None:
+    async def end(self, conversation_id: UUID) -> None:
 
-        try:
-            await self.convo_db.partial_update(
-                set={"has_ended": True}, conversation_id=conversation_id
-            )
-        except DatabaseException as e:
-            raise DatabaseException(
-                message=("Failed to end conversation."), debug_info=(str(e))
-            )
-
-    async def get(
-        self,
-        token: AccessTokenContent,
-        limit: int = 15,
-        offset: int = 0,
-        convo_limit: int = 3,
-    ) -> List[ConversationHistory]:
-        # limits the conversations to the latest 3
-        conversations = await self.convo_db.get_latest_conversation(
-            user_id=token.user_id, limit=convo_limit
+        conversation = await self.convo_db.end_conversation(
+            conversation_id=conversation_id
         )
-        result: List[ConversationHistory] = []
 
-        for convo in conversations:
-            # calculates the slice range (e.g, limit=15, offset=15 -> [30: 15])
-            start = -(offset + limit)
-            end = -offset if offset > 0 else None
-
-            paged_ids = convo.messages_ids[start:end]
-
-            if paged_ids:
-                current_convo_messages = await self.message_db.get_messages_by_ids(
-                    paged_ids
-                )
-                # sorts the messages based on the timestamp
-                current_convo_messages.sort(key=lambda x: x.timestamp)
-
-                result.append(
-                    ConversationHistory(
-                        conversation_id=convo.conversation_id,
-                        messages=current_convo_messages,
-                    )
-                )
-
-        return result
+        if await self.summary_db.verify_uniqueness(conversation_id):
+            await self.summary_service.summarize_conversations(
+                conversation=conversation
+            )

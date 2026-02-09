@@ -1,8 +1,8 @@
-from src.ventio_api.infrastructure.database.base_database import BaseDatabase
+from .base_database import BaseDatabase
 from ...models.message_model import Message
 from typing import List
 from uuid import UUID
-from ...exceptions import NotFoundException
+from ...exceptions import MessageNotFoundException
 
 
 class MessageDatabase(BaseDatabase[Message]):
@@ -13,9 +13,18 @@ class MessageDatabase(BaseDatabase[Message]):
         super().__init__()
 
     async def get_messages_by_ids(self, message_ids: List[UUID]) -> List[Message]:
-        try:
-            messages = self.collection.find({"message_id": {"$in": message_ids}})
-        except NotFoundException as e:
-            raise NotFoundException from e
+        cursor = self.collection.find({"message_id": {"$in": message_ids}})
+        docs = [doc async for doc in cursor]
 
-        return [self.model(**doc) async for doc in messages]
+        if len(docs) != len(message_ids):
+            raise MessageNotFoundException("One or more messages does not exists.")
+
+        return [self.model(**doc) for doc in docs]
+
+    async def delete_messages_by_id(self, conversation_id: UUID) -> None:
+        result = await self.delete(conversation_id=conversation_id)
+
+        if not result:
+            raise MessageNotFoundException(
+                f"No messages found to delete for conversation {conversation_id}"
+            )
