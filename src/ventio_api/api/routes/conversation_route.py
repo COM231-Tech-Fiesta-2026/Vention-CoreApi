@@ -32,4 +32,4 @@ async def end_conversation_route(
         raise HTTPException(
             status_code=400, detail="conversation_id is required to end conversation."
         )
-    await conversation.close(conversation_id)
+    await conversation.end(conversation_id)

@@ -13,14 +13,15 @@ class MessageDatabase(BaseDatabase[Message]):
         super().__init__()
 
     async def get_messages_by_ids(self, message_ids: List[UUID]) -> List[Message]:
-        try:
-            messages = self.collection.find({"message_id": {"$in": message_ids}})
-        except MessageNotFoundException as e:
-            raise MessageNotFoundException from e
+        cursor = self.collection.find({"message_id": {"$in": message_ids}})
+        docs = [doc async for doc in cursor]
 
-        return [self.model(**doc) async for doc in messages]
+        if len(docs) != len(message_ids):
+            raise MessageNotFoundException("One or more messages does not exists.")
 
-    async def delete_messages_after_summary(self, conversation_id: UUID) -> None:
+        return [self.model(**doc) for doc in docs]
+
+    async def delete_messages_by_id(self, conversation_id: UUID) -> None:
         result = await self.delete(conversation_id=conversation_id)
 
         if not result:

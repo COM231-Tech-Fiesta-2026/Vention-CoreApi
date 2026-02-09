@@ -22,11 +22,14 @@ class SummaryDatabase(BaseDatabase[Summary]):
 
     async def get_summaries_by_ids(self, conversation_ids: List[UUID]) -> List[Summary]:
 
-        try:
-            cursor = self.collection.find(
-                {"conversation_id": {"$in": conversation_ids}}
-            ).sort("timestamp", -1)
-        except ConversationNotFoundException as e:
-            raise ConversationNotFoundException from e
+        cursor = self.collection.find(
+            {"conversation_id": {"$in": conversation_ids}}
+        ).sort("timestamp", -1)
+        docs = [doc async for doc in cursor]
 
-        return [self.model(**doc) async for doc in cursor]
+        if len(docs) != len(conversation_ids):
+            raise ConversationNotFoundException(
+                "One or more conversations does not exists."
+            )
+
+        return [self.model(**doc) for doc in docs]

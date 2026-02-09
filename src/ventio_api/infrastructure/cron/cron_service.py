@@ -3,7 +3,7 @@ from src.ventio_api.infrastructure.database.conversations_db import Conversation
 from src.ventio_api.infrastructure.database.messages_db import MessageDatabase
 from src.ventio_api.infrastructure.database.summaries_db import SummaryDatabase
 from src.ventio_api.models.summary_model import Summary
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 
 class CronService:
@@ -36,11 +36,12 @@ class CronService:
 
                 await self.summaries_db.insert(
                     Summary(
-                        summary_id=uuid4(),
+                        user_id=uuid4(),
                         conversation_id=convo.conversation_id,
-                        title=summary.title,
-                        content=summary.content,
-                        timestamp=datetime.now(timezone.utc),
+                        user_feelings=summary.user_feelings,  # non-existent(mock)
+                        title=summary.title,  # non-existent(mock)
+                        description=summary.content,  # non-existent(mock)
+                        timestamp=str(datetime.now(timezone.utc)),
                     )
                 )
 
@@ -54,7 +55,7 @@ class CronService:
 
             await self.delete_exceeding_summaries(convo.conversation_id)
 
-    async def delete_exceeding_summaries(self, convo_id):
+    async def delete_exceeding_summaries(self, convo_id: UUID):
         summaries = await self.summaries_db.get_many(
             conversation_id=convo_id, sort=[("timestamp", -1)]
         )

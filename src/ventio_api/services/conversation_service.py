@@ -10,11 +10,11 @@ from ..exceptions import (
     ConversationNotFoundException,
 )
 from uuid import uuid4, UUID
-from datetime import datetime, timezone
 from ..models.conversation_model import Conversation
 from ..models.message_model import Message
-from ..models.summary_model import Summary
 from ..infrastructure.database.summaries_db import SummaryDatabase
+from .summary_service import SummaryService
+from ..core.utils import get_now
 
 
 class ConversationService:
@@ -23,9 +23,7 @@ class ConversationService:
         self.convo_db = ConversationDatabase()
         self.message_db = MessageDatabase()
         self.summary_db = SummaryDatabase()
-
-    def get_now(self):
-        return datetime.now(timezone.utc).isoformat()
+        self.summary_service = SummaryService()
 
     async def process_message(
         self, conversation_input: ConversationInput, token: AccessTokenContent
@@ -47,7 +45,7 @@ class ConversationService:
             mode=conversation_input.mode,
             messages_ids=[],
             has_ended=False,
-            last_message_timestamp=str(self.get_now()),
+            last_message_timestamp=str(get_now()),
         )
         conversation = await self.convo_db.insert(new_conversation)
 
@@ -57,7 +55,7 @@ class ConversationService:
             content=conversation_input.content,
             reply="Okay lang yannnn",
             sender_name=token.name,
-            timestamp=str(self.get_now()),
+            timestamp=str(get_now()),
         )
         message = await self.message_db.insert(new_message)
 
@@ -88,7 +86,7 @@ class ConversationService:
             content=conversation_input.content,
             reply="Okay lang yannn!",
             sender_name=token.name,
-            timestamp=str(self.get_now()),
+            timestamp=str(get_now()),
         )
         message = await self.message_db.insert(new_message)
 
@@ -108,36 +106,13 @@ class ConversationService:
             reply="Okay lang yannn",  # Hardcoded for now
         )
 
-    async def close(self, conversation_id: UUID) -> None:
+    async def end(self, conversation_id: UUID) -> None:
 
         conversation = await self.convo_db.end_conversation(
             conversation_id=conversation_id
         )
 
-        llm_output: dict[str, str] = {  # mock for llm
-            "title": "Malungkot si user ;(",
-            "user_feelings": "Malungkot",
-            "description": "Malungkot si user, umiiyak :(",
-        }
-
         if await self.summary_db.verify_uniqueness(conversation_id):
-
-            new_summary = Summary(
-                conversation_id=conversation.conversation_id,
-                user_id=conversation.user_id,
-                title=llm_output["title"],  # change this after integrating llm
-                user_feelings=llm_output[
-                    "user_feelings"
-                ],  # change this after integrating llm
-                description=llm_output[
-                    "description"
-                ],  # change this after integrating llm
-                timestamp=str(self.get_now()),
-            )
-
-            await self.summary_db.insert(new_summary)
-
-            # deletes the messages of the conversation after summary
-            await self.message_db.delete_messages_after_summary(
-                conversation_id=conversation_id
+            await self.summary_service.summarize_conversations(
+                conversation=conversation
             )
